@@ -1,211 +1,64 @@
-#include <fmt/core.h>
-#include <cmath>
-#include <set>
 #include <fstream>
-#include <strstream>
-#include <istream>
+#include <iostream>
+#include <limits>
 #include <vector>
-
-struct message
+#include <fmt/core.h>
+struct data
 {
-    std::string op;
-    int number;
+    long long number;
+    int index;
 };
-struct position
+int main(void)
 {
-    int x = 0;
-    int y = 0;
-    int fin()
-    {
-        return abs(x) + abs(y);
-    }
-} ship, guide;
-std::vector<message> vec;
+    std::vector<data> buses;
+    int timestamp;
 
-int main()
-{
-    std::ifstream f("./input.txt");
-    if (!f.is_open())
-        return false;
+    std::ifstream file("input.txt");
+    file >> timestamp;
 
-    while (!f.eof())
+    std::string line;
+    file >> line;
+    size_t i = 0;
+    int tmp_number_index = 0;
+    while (i < line.length())
     {
-        char line[128];
-        f.getline(line, 128);
-        std::strstream s;
-        std::string str;
-        message tmp_message;
-        s << line;
-        s >> str;
-        char tmp_op = str[0];
-        tmp_message.op = tmp_op;
-        str.erase(str.begin());
-        tmp_message.number = atoi(str.c_str());
-
-        vec.push_back(tmp_message);
-    }
-    guide.x = 10;
-    guide.y = 1;
-    for (auto &x : vec)
-    {
-        switch (*(x.op.c_str()))
+        data tmp_data;
+        if (line[i] == 'x')
         {
-        case 'N':
-            guide.y += x.number;
-            break;
-        case 'S':
-            guide.y -= x.number;
-            break;
+            i += 2;
+            tmp_number_index++;
 
-        case 'E':
-            guide.x += x.number;
-            break;
+            continue;
+        }
+        size_t amt = 0;
+        int  bus = std::stoi(line.substr(i), &amt);
+        tmp_data.number = bus;
+        tmp_data.index = tmp_number_index;
+        buses.push_back(tmp_data);
 
-        case 'W':
-            guide.x -= x.number;
-            break;
+        i += amt + 1;
 
-        case 'L':
+        tmp_number_index++;
+    }
+
+    long long current_chect;
+    int find_index;
+
+    long long step = buses[0].number;
+    size_t stamp = 0;
+    for (int i = 1; i < buses.size(); i++)
+    {
+        bool departs = false;
+        // 找到前两辆车的最小公倍数
+        while(!departs)
         {
-            for (int i = 0; i < x.number / 90; i++)
-            {
-                int tmp_x = guide.x;
-                int tmp_y = guide.y;
-
-                guide.x = -tmp_y;
-                guide.y = tmp_x;
-            }
-            break;
+            stamp  += step;
+            departs = ((stamp + buses[i].index) % buses[i].number) == 0;
         }
 
-        case 'R':
-        {
-            for (int i = 0; i < x.number / 90;i++)
-            {
-                int tmp_x = guide.x;
-                int tmp_y = guide.y;
-
-                guide.x = tmp_y;
-                guide.y = -tmp_x;
-            }
-            break;
-        }
-        case 'F':
-            ship.x += guide.x * x.number;
-            ship.y += guide.y * x.number;
-            break;
-        }
-        //fmt::print("op: {} number {} ship: {} {}  guid: {} {} \n", x.op, x.number, ship.x, ship.y, guide.x, guide.y);
+        step *= buses[i].number;
     }
 
-    for (auto &x : vec)
-    {
-        //fmt::print("{} {}\n", x.op, x.number);
-    }
-
-    fmt::print("{} \n", ship.fin());
-
+    fmt::print("{}\n", stamp);
     return 0;
 }
-
-/* #include <fmt/core.h>
-#include <cmath>
-#include <set>
-#include <fstream>
-#include <strstream>
-#include <istream>
-#include <vector>
-
-struct message
-{
-    std::string op;
-    int number;
-};
-struct position
-{
-    int x = 0;
-    int y = 0;
-    int fin()
-    {
-        return abs(x) + abs(y);
-    }
-} ship, guide;
-std::vector<message> vec;
-
-int main()
-{
-    std::ifstream f("./input.txt");
-    if (!f.is_open())
-        return false;
-
-    while (!f.eof())
-    {
-        char line[128];
-        f.getline(line, 128);
-        std::strstream s;
-        std::string str;
-        message tmp_message;
-        s << line;
-        s >> str;
-        char tmp_op = str[0];
-        tmp_message.op = tmp_op;
-        str.erase(str.begin());
-        tmp_message.number = atoi(str.c_str());
-
-        vec.push_back(tmp_message);
-    }
-    guide.x = 10;
-    guide.y = 1;
-    for (auto &x : vec)
-    {
-        switch (*(x.op.c_str()))
-        {
-        case 'N':
-            guide.y += x.number;
-            break;
-        case 'S':
-            guide.y -= x.number;
-            break;
-
-        case 'E':
-            guide.x += x.number;
-            break;
-
-        case 'W':
-            guide.x -= x.number;
-            break;
-
-        case 'L':
-        {
-            int _x = guide.x;
-            int _y = guide.y;
-            guide.x = cos(x.number) * _x - sin(x.number) * _y;
-            guide.y = sin(x.number) * _x + cos(x.number) * _y;
-            break;
-        }
-
-        case 'R':
-        {
-            int _x = guide.x;
-            int _y = guide.y;
-            guide.x = cos((-x.number)) * _x - sin((float)(-x.number)) * _y;
-            guide.y = sin((-x.number)) * _x + cos((float)(-x.number)) * _y;
-            break;
-        }
-        case 'F':
-            ship.x += guide.x * x.number;
-            ship.y += guide.y * x.number;
-            break;
-        }
-        fmt::print("op: {} number {} ship: {} {}  guid: {} {} \n", x.op, x.number, ship.x, ship.y, guide.x, guide.y);
-    }
-
-    for (auto &x : vec)
-    {
-        //fmt::print("{} {}\n", x.op, x.number);
-    }
-
-    fmt::print("{} \n", ship.fin());
-
-    return 0;
-} */
